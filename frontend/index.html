@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificador de Tomates</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍅 Clasificador de Tomates</h1>
+            <p class="subtitle">Detecta y clasifica tomates con IA</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Selector de modelo -->
+            <div class="model-selector">
+                <h2>Selecciona el modelo</h2>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="modelo" value="segmentacion" checked>
+                        <span class="radio-custom"></span>
+                        <span class="radio-label">Segmentación (YOLO11)</span>
+                        <small>Detecta y segmenta múltiples tomates</small>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="modelo" value="clasificacion">
+                        <span class="radio-custom"></span>
+                        <span class="radio-label">Clasificación (TensorFlow)</span>
+                        <small>Clasifica el tipo de tomate</small>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Área de carga de imagen -->
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>Arrastra una imagen aquí o haz clic para seleccionar</p>
+                        <button class="btn-secondary" id="selectFileBtn">Seleccionar archivo</button>
+                        <button class="btn-secondary" id="cameraBtn">📷 Usar cámara</button>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                </div>
+
+                <!-- Vista previa de imagen -->
+                <div class="image-preview" id="imagePreview" style="display: none;">
+                    <img id="previewImg" alt="Vista previa">
+                    <button class="btn-remove" id="removeImgBtn">✕</button>
+                </div>
+            </div>
+
+            <!-- Botón de procesar -->
+            <div class="action-section">
+                <button class="btn-primary" id="processBtn" disabled>
+                    <span class="btn-text">Procesar imagen</span>
+                    <span class="btn-loader" style="display: none;"></span>
+                </button>
+            </div>
+
+            <!-- Resultados -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h2>Resultados</h2>
+                
+                <!-- Resultados de segmentación -->
+                <div id="segmentationResults" style="display: none;">
+                    <div class="result-image-container">
+                        <img id="segmentationResultImg" alt="Resultado segmentación">
+                    </div>
+                    <div class="detections-list" id="detectionsList"></div>
+                </div>
+
+                <!-- Resultados de clasificación -->
+                <div id="classificationResults" style="display: none;">
+                    <div class="classification-card">
+                        <div class="prediction-main">
+                            <span class="prediction-label">Clase predicha:</span>
+                            <span class="prediction-value" id="predictedClass"></span>
+                        </div>
+                        <div class="prediction-confidence">
+                            <span>Confianza: </span>
+                            <span id="predictionConfidence"></span>
+                        </div>
+                    </div>
+                    <div class="probabilities-chart" id="probabilitiesChart"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de cámara -->
+        <div class="modal" id="cameraModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Tomar foto</h3>
+                    <button class="modal-close" id="closeCameraBtn">✕</button>
+                </div>
+                <div class="modal-body">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="cancelCameraBtn">Cancelar</button>
+                    <button class="btn-primary" id="captureBtn">📷 Capturar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

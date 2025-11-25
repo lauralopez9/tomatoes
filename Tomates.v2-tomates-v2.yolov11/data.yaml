@@ -1,0 +1,15 @@
+names:
+- damaged
+- old
+- ripe
+- unripe
+nc: 4
+roboflow:
+  license: CC BY 4.0
+  project: tomates-mi456
+  url: https://universe.roboflow.com/nathy/tomates-mi456/dataset/2
+  version: 2
+  workspace: nathy
+test: C:\Users\ll529\OneDrive\Documentos\modelado_datos\Tomates.v2-tomates-v2.yolov11\test\images
+train: C:\Users\ll529\OneDrive\Documentos\modelado_datos\Tomates.v2-tomates-v2.yolov11\train\images
+val: C:\Users\ll529\OneDrive\Documentos\modelado_datos\Tomates.v2-tomates-v2.yolov11\valid\images
