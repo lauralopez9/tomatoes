@@ -1,8 +1,10 @@
 // Configuración
+// Última actualización: 2025-11-26 - URL de Azure configurada
 const API_URL = 'https://aplicaionwebtomatoes-czb9b4h2b0fjasfr.canadacentral-01.azurewebsites.net';
 
 // Log para verificar la URL configurada
 console.log('🔧 API_URL configurada:', API_URL);
+console.log('🔧 Timestamp:', new Date().toISOString());
 
 let selectedImage = null;
 let stream = null;
