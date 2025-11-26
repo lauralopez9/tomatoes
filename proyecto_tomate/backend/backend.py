@@ -15,14 +15,51 @@ import base64
 from ultralytics import YOLO
 import tensorflow as tf
 
+print("Versión de 2.0")
 # Rutas base del proyecto
 # Este archivo está en: .../proyecto_tomate/backend/backend.py
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../proyecto_tomate
-MODELS_DIR = os.path.join(BASE_DIR, "models")
+# Calcular BASE_DIR de forma dinámica
+_current_file = os.path.abspath(__file__)
+BASE_DIR = os.path.dirname(os.path.dirname(_current_file))  # .../proyecto_tomate
+
+# Si estamos en /tmp (Azure), usar esa ruta, sino usar la ruta relativa
+if BASE_DIR.startswith('/tmp'):
+    MODELS_DIR = os.path.join(BASE_DIR, "models")
+    print(f"🔍 Modo Azure detectado. BASE_DIR: {BASE_DIR}")
+else:
+    MODELS_DIR = os.path.join(BASE_DIR, "models")
+
+print(f"📁 MODELS_DIR configurado como: {MODELS_DIR}")
+
+# Verificar si existe, si no, buscar en ubicaciones alternativas
+if not os.path.exists(MODELS_DIR):
+    print(f"⚠ MODELS_DIR no existe: {MODELS_DIR}")
+    # Buscar en ubicaciones alternativas
+    possible_paths = [
+        os.path.join(BASE_DIR, "models"),
+        os.path.join(os.path.dirname(BASE_DIR), "models"),
+        "/app/models",
+        os.path.join(os.getcwd(), "models"),
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            MODELS_DIR = path
+            print(f"✓ MODELS_DIR encontrado en: {MODELS_DIR}")
+            break
+    else:
+        print(f"❌ No se encontró MODELS_DIR en ninguna ubicación")
+
 UPLOAD_FOLDER = os.path.join(MODELS_DIR, "uploads")
 
 app = Flask(__name__)
-CORS(app)  # Permitir CORS para el frontend
+# Configurar CORS para permitir todas las solicitudes desde Vercel
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Configuración
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -41,10 +78,32 @@ try:
         "YOLO_SEG_MODEL_PATH",
         os.path.join(MODELS_DIR, "modelos_entrenados", "SegmentacionYolo.pt"),
     )
-    modelo_segmentacion = YOLO(seg_path)
-    print(f"✓ Modelo de segmentación cargado desde: {seg_path}")
+    
+    # Si no existe, buscar en otras ubicaciones
+    if not os.path.exists(seg_path):
+        print(f"⚠ Ruta de modelo no encontrada: {seg_path}")
+        # Buscar el modelo en ubicaciones alternativas
+        possible_seg_paths = [
+            os.path.join(MODELS_DIR, "modelos_entrenados", "SegmentacionYolo.pt"),
+            os.path.join(BASE_DIR, "models", "modelos_entrenados", "SegmentacionYolo.pt"),
+            os.path.join(os.path.dirname(BASE_DIR), "models", "modelos_entrenados", "SegmentacionYolo.pt"),
+        ]
+        for path in possible_seg_paths:
+            if os.path.exists(path):
+                seg_path = path
+                print(f"✓ Modelo encontrado en: {seg_path}")
+                break
+        
+    if os.path.exists(seg_path):
+        modelo_segmentacion = YOLO(seg_path)
+        print(f"✓ Modelo de segmentación cargado desde: {seg_path}")
+    else:
+        print(f"❌ No se encontró el modelo de segmentación. Buscado en: {seg_path}")
+        print(f"   Contenido de MODELS_DIR: {os.listdir(MODELS_DIR) if os.path.exists(MODELS_DIR) else 'NO EXISTE'}")
 except Exception as e:
     print(f"⚠ Error cargando modelo de segmentación: {e}")
+    import traceback
+    traceback.print_exc()
 
 try:
     # Modelo principal de clasificación (DenseNet por defecto)
@@ -52,6 +111,22 @@ try:
         "TF_CLASS_MODEL_PATH",
         os.path.join(MODELS_DIR, "modelo_tomates_densenet121.h5"),
     )
+    
+    # Si no existe, buscar en otras ubicaciones
+    if not os.path.exists(tf_model_path):
+        print(f"⚠ Ruta de modelo TF no encontrada: {tf_model_path}")
+        # Buscar el modelo en ubicaciones alternativas
+        posibles_tf_paths = [
+            os.path.join(MODELS_DIR, "modelo_tomates_densenet121.h5"),
+            os.path.join(BASE_DIR, "models", "modelo_tomates_densenet121.h5"),
+            os.path.join(os.path.dirname(BASE_DIR), "models", "modelo_tomates_densenet121.h5"),
+        ]
+        for path in posibles_tf_paths:
+            if os.path.exists(path):
+                tf_model_path = path
+                print(f"✓ Modelo TF encontrado en: {tf_model_path}")
+                break
+    
     if os.path.exists(tf_model_path):
         modelo_clasificacion = tf.keras.models.load_model(tf_model_path)
         print(f"✓ Modelo de clasificación cargado desde: {tf_model_path}")
@@ -61,15 +136,22 @@ try:
                       "modelo_tomates_efficientnetb0.h5",
                       "modelo_tomates_resnet50.h5"]
         for nombre in modelos_tf:
-            modelo_path = os.path.join(MODELS_DIR, nombre)
-            if os.path.exists(modelo_path):
-                modelo_clasificacion = tf.keras.models.load_model(modelo_path)
-                print(f"✓ Modelo de clasificación cargado desde: {modelo_path}")
+            for base in [MODELS_DIR, os.path.join(BASE_DIR, "models")]:
+                modelo_path = os.path.join(base, nombre)
+                if os.path.exists(modelo_path):
+                    modelo_clasificacion = tf.keras.models.load_model(modelo_path)
+                    print(f"✓ Modelo de clasificación cargado desde: {modelo_path}")
+                    break
+            if modelo_clasificacion is not None:
                 break
-    if modelo_clasificacion is None:
-        print("⚠ No se encontró ningún modelo de clasificación en la carpeta 'models'")
+        if modelo_clasificacion is None:
+            print("⚠ No se encontró ningún modelo de clasificación")
+            if os.path.exists(MODELS_DIR):
+                print(f"   Contenido de MODELS_DIR: {os.listdir(MODELS_DIR)}")
 except Exception as e:
     print(f"⚠ Error cargando modelo de clasificación: {e}")
+    import traceback
+    traceback.print_exc()
 
 CLASES_CLASIFICACION = ["Damaged", "Old", "Ripe", "Unripe"]
 IMG_SIZE_CLASIFICACION = (180, 180)
@@ -212,6 +294,40 @@ def health():
         "segmentacion": modelo_segmentacion is not None,
         "clasificacion": modelo_clasificacion is not None
     })
+
+@app.route('/api/debug/paths', methods=['GET'])
+def debug_paths():
+    """Endpoint de debug para verificar rutas y archivos"""
+    import os
+    debug_info = {
+        "current_file": __file__,
+        "current_dir": os.getcwd(),
+        "BASE_DIR": BASE_DIR,
+        "MODELS_DIR": MODELS_DIR,
+        "MODELS_DIR_exists": os.path.exists(MODELS_DIR),
+        "MODELS_DIR_contents": os.listdir(MODELS_DIR) if os.path.exists(MODELS_DIR) else "NO EXISTE",
+    }
+    
+    # Buscar modelos
+    seg_path = os.path.join(MODELS_DIR, "modelos_entrenados", "SegmentacionYolo.pt")
+    tf_path = os.path.join(MODELS_DIR, "modelo_tomates_densenet121.h5")
+    
+    debug_info.update({
+        "seg_model_path": seg_path,
+        "seg_model_exists": os.path.exists(seg_path),
+        "tf_model_path": tf_path,
+        "tf_model_exists": os.path.exists(tf_path),
+    })
+    
+    # Buscar en /tmp
+    tmp_dirs = []
+    if os.path.exists("/tmp"):
+        for item in os.listdir("/tmp"):
+            if os.path.isdir(os.path.join("/tmp", item)) and item.startswith("8de"):
+                tmp_dirs.append(item)
+    debug_info["tmp_dirs"] = tmp_dirs[:5]  # Primeros 5
+    
+    return jsonify(debug_info)
 
 
 if __name__ == '__main__':

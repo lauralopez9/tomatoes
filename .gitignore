@@ -42,6 +42,12 @@ ENV/
 modelos_entrenados/
 *.weights
 
+# Excepciones: Modelos necesarios para producción
+# Permitir el directorio modelos_entrenados para poder incluir archivos específicos
+!proyecto_tomate/models/modelos_entrenados/
+!proyecto_tomate/models/modelos_entrenados/SegmentacionYolo.pt
+!proyecto_tomate/models/modelo_tomates_densenet121.h5
+
 # Datasets grandes
 dataset/
 Tomates-*/
