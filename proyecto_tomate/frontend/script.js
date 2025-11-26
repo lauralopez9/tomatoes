@@ -1,5 +1,9 @@
 // Configuración
 const API_URL = 'https://aplicaionwebtomatoes-czb9b4h2b0fjasfr.canadacentral-01.azurewebsites.net';
+
+// Log para verificar la URL configurada
+console.log('🔧 API_URL configurada:', API_URL);
+
 let selectedImage = null;
 let stream = null;
 
@@ -281,15 +285,21 @@ function getClassColor(clase) {
 // Verificar estado del backend al cargar
 window.addEventListener('load', async () => {
     try {
-        const response = await fetch(`${API_URL}/api/health`);
+        const healthUrl = `${API_URL}/api/health`;
+        console.log('🔍 Verificando backend en:', healthUrl);
+        
+        const response = await fetch(healthUrl);
         const data = await response.json();
         
         if (!data.segmentacion && !data.clasificacion) {
             alert('⚠️ Advertencia: Los modelos no están disponibles. Verifica que el backend esté corriendo y los modelos estén cargados.');
+        } else {
+            console.log('✓ Backend conectado correctamente');
         }
     } catch (error) {
-        alert('⚠️ No se pudo conectar con el backend. Asegúrate de que esté corriendo en http://localhost:5000');
-        console.error('Error connecting to backend:', error);
+        console.error('❌ Error connecting to backend:', error);
+        console.error('URL intentada:', `${API_URL}/api/health`);
+        alert(`⚠️ No se pudo conectar con el backend en ${API_URL}. Verifica que el servidor esté corriendo y accesible.`);
     }
 });
 
