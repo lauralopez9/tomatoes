@@ -73,4 +73,5 @@ jobs:
         with:
           app-name: 'aplicaionwebtomatoes'
           slot-name: 'Production'
+          startup-command: "gunicorn --chdir proyecto_tomate/backend backend:app --bind 0.0.0.0:${PORT} --timeout 600 --workers 1"
           
