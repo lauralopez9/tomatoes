@@ -29,9 +29,12 @@ jobs:
       # NOTA: Omitimos la creación de entorno virtual y la instalación local de dependencias
       # para reducir el uso de disco en el runner de GitHub. Azure (Oryx) se encargará de
       # instalar las dependencias usando el requirements.txt durante el deploy.
-      - name: Copiar requirements del backend a la raíz para Azure/Oryx
+      - name: Preparar archivos para Azure
         run: |
+          # Copiar requirements.txt a la raíz para Oryx
           cp proyecto_tomate/backend/requirements.txt requirements.txt
+          # Asegurar que startup.sh tenga permisos de ejecución
+          chmod +x startup.sh
 
       # By default, when you enable GitHub CI/CD integration through the Azure portal, the platform automatically sets the SCM_DO_BUILD_DURING_DEPLOYMENT application setting to true. This triggers the use of Oryx, a build engine that handles application compilation and dependency installation (e.g., pip install) directly on the platform during deployment. Hence, we exclude the antenv virtual environment directory from the deployment artifact to reduce the payload size. 
       - name: Upload artifact for deployment jobs
@@ -73,5 +76,5 @@ jobs:
         with:
           app-name: 'aplicaionwebtomatoes'
           slot-name: 'Production'
-          startup-command: "gunicorn --chdir proyecto_tomate/backend backend:app --bind 0.0.0.0:${PORT} --timeout 600 --workers 1"
+          startup-command: "bash startup.sh"
           

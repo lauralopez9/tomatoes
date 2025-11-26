@@ -1,5 +1,5 @@
 // Configuración
-const API_URL = 'aplicaionwebtomatoes-czb9b4h2b0fjasfr.canadacentral-01.azurewebsites.net';
+const API_URL = 'https://aplicaionwebtomatoes-czb9b4h2b0fjasfr.canadacentral-01.azurewebsites.net';
 let selectedImage = null;
 let stream = null;
 
