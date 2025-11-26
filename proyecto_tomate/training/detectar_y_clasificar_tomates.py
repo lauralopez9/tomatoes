@@ -14,11 +14,18 @@ from PIL import Image
 import glob
 
 # === CONFIGURACIÓN ===
+# Rutas base del proyecto
+# Este archivo está en: .../proyecto_tomate/training/detectar_y_clasificar_tomates.py
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../proyecto_tomate
+MODELS_DIR = os.path.join(PROJECT_ROOT, "models")
+RUNS_DIR = os.path.join(MODELS_DIR, "runs", "segment")
+
 # Modelo YOLO para detección y segmentación
 YOLO_MODEL_PATH = None  # Se detectará automáticamente
 
-# Modelo TensorFlow para clasificación
-TF_MODEL_PATH = "modelo_tomates_efficientnetb0.h5"  # Puedes cambiar a resnet50 o densenet121
+# Modelo TensorFlow para clasificación (dentro de models/)
+# Usamos DenseNet121 como modelo principal por defecto
+TF_MODEL_PATH = os.path.join(MODELS_DIR, "modelo_tomates_densenet121.h5")
 TF_IMG_SIZE = (180, 180)
 TF_CLASS_NAMES = ["Damaged", "Old", "Ripe", "Unripe"]
 
@@ -28,8 +35,8 @@ def cargar_modelo_yolo():
     import glob
     
     posibles_rutas = [
-        'runs/segment/yolo11_tomates_seg*/weights/best.pt',
-        'runs/segment/yolo11_tomates_seg*/weights/last.pt',
+        os.path.join(RUNS_DIR, "yolo11_tomates_seg*", "weights", "best.pt"),
+        os.path.join(RUNS_DIR, "yolo11_tomates_seg*", "weights", "last.pt"),
     ]
     
     modelos_encontrados = []
@@ -53,17 +60,18 @@ def cargar_modelo_yolo():
 def cargar_modelo_tensorflow():
     """Carga el modelo de TensorFlow para clasificación"""
     if not os.path.exists(TF_MODEL_PATH):
-        # Intentar con otros modelos
+        # Intentar con otros modelos dentro de models/
         modelos_alternativos = [
-            "modelo_tomates_resnet50.h5",
             "modelo_tomates_densenet121.h5",
-            "modelo_tomates_efficientnetb0.h5"
+            "modelo_tomates_efficientnetb0.h5",
+            "modelo_tomates_resnet50.h5",
         ]
-        for modelo in modelos_alternativos:
+        for nombre in modelos_alternativos:
+            modelo = os.path.join(MODELS_DIR, nombre)
             if os.path.exists(modelo):
                 print(f"✓ TensorFlow cargado desde: {modelo}")
                 return tf.keras.models.load_model(modelo), modelo
-        raise FileNotFoundError(f"No se encontró ningún modelo de TensorFlow")
+        raise FileNotFoundError(f"No se encontró ningún modelo de TensorFlow en 'models/'")
     
     print(f"✓ TensorFlow cargado desde: {TF_MODEL_PATH}")
     return tf.keras.models.load_model(TF_MODEL_PATH), TF_MODEL_PATH

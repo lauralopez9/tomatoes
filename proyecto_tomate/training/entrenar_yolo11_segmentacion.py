@@ -37,8 +37,14 @@ import torch
 import yaml
 from datetime import datetime
 
+# Rutas base del proyecto
+# Este archivo está en: .../proyecto_tomate/training/entrenar_yolo11_segmentacion.py
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../proyecto_tomate
+DATASETS_DIR = os.path.join(PROJECT_ROOT, "datasets")
+MODELS_DIR = os.path.join(PROJECT_ROOT, "models")
+
 # Ruta al dataset local (con 4 categorías: damaged, old, ripe, unripe)
-DATASET_DIR = "Tomates.v2-tomates-v2.yolov11"
+DATASET_DIR = os.path.join(DATASETS_DIR, "Tomates.v2-tomates-v2.yolov11")
 data_yaml_path = os.path.join(DATASET_DIR, "data.yaml")
 
 # Verificar que existe el dataset
@@ -115,8 +121,9 @@ print("="*60)
 # 'yolo11x-seg.pt' = extra large (más preciso, más lento)
 
 print("\nCargando modelo YOLO11 para segmentación...")
-model = YOLO('yolo11n-seg.pt')  # Puedes cambiar a 'yolo11s-seg.pt' o 'yolo11m-seg.pt' para mejor precisión
-print("✓ Modelo cargado")
+yolo_weights = os.path.join(MODELS_DIR, "yolo11n-seg.pt")
+model = YOLO(yolo_weights)  # Puedes cambiar a 'yolo11s-seg.pt' o 'yolo11m-seg.pt' para mejor precisión
+print(f"✓ Modelo cargado desde: {yolo_weights}")
 
 # Detectar dispositivo (GPU o CPU)
 if torch.cuda.is_available():
@@ -150,13 +157,14 @@ print(f"Experimento: {experiment_name}")
 print("="*60 + "\n")
 
 # Entrenar el modelo
+runs_dir = os.path.join(MODELS_DIR, "runs", "segment")
 results = model.train(
     data=data_yaml_path,      # Ruta al archivo de configuración
     epochs=EPOCHS,            # Número de épocas
     imgsz=IMG_SIZE,           # Tamaño de imagen
     batch=BATCH_SIZE,         # Tamaño de batch
     name=experiment_name,     # Nombre único del experimento
-    project='runs/segment',   # Directorio del proyecto
+    project=runs_dir,         # Directorio del proyecto dentro de models/runs/segment
     device=device,            # GPU o CPU (detectado automáticamente)
     patience=50,              # Early stopping patience
     save=True,                # Guardar checkpoints
@@ -174,11 +182,11 @@ print("="*60)
 print("\nGuardando modelo con nombre 'SegmentacionYolo'...")
 
 # Rutas de los modelos entrenados
-best_model_path = f"runs/segment/{experiment_name}/weights/best.pt"
-last_model_path = f"runs/segment/{experiment_name}/weights/last.pt"
+best_model_path = os.path.join(runs_dir, experiment_name, "weights", "best.pt")
+last_model_path = os.path.join(runs_dir, experiment_name, "weights", "last.pt")
 
 # Crear directorio para modelos guardados
-saved_models_dir = "modelos_entrenados"
+saved_models_dir = os.path.join(MODELS_DIR, "modelos_entrenados")
 os.makedirs(saved_models_dir, exist_ok=True)
 
 # Copiar el mejor modelo con el nombre solicitado
@@ -212,5 +220,5 @@ if hasattr(results, 'results_dict'):
 print("\n✓ ¡Entrenamiento completado exitosamente!")
 print("\nPara usar el modelo entrenado:")
 print("  from ultralytics import YOLO")
-print("  model = YOLO('modelos_entrenados/SegmentacionYolo.pt')")
+print(f"  model = YOLO(r'{os.path.join('models', 'modelos_entrenados', 'SegmentacionYolo.pt')}')")
 print("  results = model('ruta/a/imagen.jpg')")

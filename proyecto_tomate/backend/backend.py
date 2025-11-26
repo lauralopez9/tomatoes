@@ -15,11 +15,16 @@ import base64
 from ultralytics import YOLO
 import tensorflow as tf
 
+# Rutas base del proyecto
+# Este archivo está en: .../proyecto_tomate/backend/backend.py
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../proyecto_tomate
+MODELS_DIR = os.path.join(BASE_DIR, "models")
+UPLOAD_FOLDER = os.path.join(MODELS_DIR, "uploads")
+
 app = Flask(__name__)
 CORS(app)  # Permitir CORS para el frontend
 
 # Configuración
-UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
 
@@ -31,24 +36,33 @@ modelo_segmentacion = None
 modelo_clasificacion = None
 
 try:
-    modelo_segmentacion = YOLO('modelos_entrenados/SegmentacionYolo.pt')
-    print("✓ Modelo de segmentación cargado")
+    seg_path = os.path.join(MODELS_DIR, "modelos_entrenados", "SegmentacionYolo.pt")
+    modelo_segmentacion = YOLO(seg_path)
+    print(f"✓ Modelo de segmentación cargado desde: {seg_path}")
 except Exception as e:
     print(f"⚠ Error cargando modelo de segmentación: {e}")
 
 try:
-    modelo_clasificacion = tf.keras.models.load_model('modelo_tomates_efficientnetb0.h5')
-    print("✓ Modelo de clasificación cargado")
-except Exception as e:
-    # Intentar con otros modelos
-    modelos_tf = ['modelo_tomates_resnet50.h5', 'modelo_tomates_densenet121.h5']
-    for modelo_path in modelos_tf:
-        if os.path.exists(modelo_path):
-            modelo_clasificacion = tf.keras.models.load_model(modelo_path)
-            print(f"✓ Modelo de clasificación cargado: {modelo_path}")
-            break
+    # Modelo principal de clasificación (DenseNet por defecto)
+    tf_model_path = os.path.join(MODELS_DIR, "modelo_tomates_densenet121.h5")
+    if os.path.exists(tf_model_path):
+        modelo_clasificacion = tf.keras.models.load_model(tf_model_path)
+        print(f"✓ Modelo de clasificación cargado desde: {tf_model_path}")
+    else:
+        # Intentar con otros modelos dentro de models/
+        modelos_tf = ["modelo_tomates_densenet121.h5",
+                      "modelo_tomates_efficientnetb0.h5",
+                      "modelo_tomates_resnet50.h5"]
+        for nombre in modelos_tf:
+            modelo_path = os.path.join(MODELS_DIR, nombre)
+            if os.path.exists(modelo_path):
+                modelo_clasificacion = tf.keras.models.load_model(modelo_path)
+                print(f"✓ Modelo de clasificación cargado desde: {modelo_path}")
+                break
     if modelo_clasificacion is None:
-        print(f"⚠ Error cargando modelo de clasificación: {e}")
+        print("⚠ No se encontró ningún modelo de clasificación en la carpeta 'models'")
+except Exception as e:
+    print(f"⚠ Error cargando modelo de clasificación: {e}")
 
 CLASES_CLASIFICACION = ["Damaged", "Old", "Ripe", "Unripe"]
 IMG_SIZE_CLASIFICACION = (180, 180)
