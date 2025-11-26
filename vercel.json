@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "name": "tomatoes-frontend",
+  "public": true,
+  "builds": [
+    {
+      "src": "proyecto_tomate/frontend/**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "proyecto_tomate/frontend/$1"
+    }
+  ]
+}
+
+
