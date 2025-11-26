@@ -1,0 +1,15 @@
+# Variables de entorno recomendadas para Azure (App Service o Container Apps)
+
+# Puerto que usará el contenedor / App Service (Azure suele inyectar PORT automáticamente)
+PORT=8000
+
+# Activar/desactivar modo debug de Flask (0 = apagado, 1 = encendido)
+FLASK_DEBUG=0
+
+# Ruta al modelo YOLO de segmentación dentro del contenedor
+YOLO_SEG_MODEL_PATH=/app/models/modelos_entrenados/SegmentacionYolo.pt
+
+# Ruta al modelo de clasificación (DenseNet121) dentro del contenedor
+TF_CLASS_MODEL_PATH=/app/models/modelo_tomates_densenet121.h5
+
+

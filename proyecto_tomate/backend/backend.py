@@ -36,7 +36,11 @@ modelo_segmentacion = None
 modelo_clasificacion = None
 
 try:
-    seg_path = os.path.join(MODELS_DIR, "modelos_entrenados", "SegmentacionYolo.pt")
+    # Permitir sobreescribir la ruta del modelo por variable de entorno
+    seg_path = os.getenv(
+        "YOLO_SEG_MODEL_PATH",
+        os.path.join(MODELS_DIR, "modelos_entrenados", "SegmentacionYolo.pt"),
+    )
     modelo_segmentacion = YOLO(seg_path)
     print(f"✓ Modelo de segmentación cargado desde: {seg_path}")
 except Exception as e:
@@ -44,7 +48,10 @@ except Exception as e:
 
 try:
     # Modelo principal de clasificación (DenseNet por defecto)
-    tf_model_path = os.path.join(MODELS_DIR, "modelo_tomates_densenet121.h5")
+    tf_model_path = os.getenv(
+        "TF_CLASS_MODEL_PATH",
+        os.path.join(MODELS_DIR, "modelo_tomates_densenet121.h5"),
+    )
     if os.path.exists(tf_model_path):
         modelo_clasificacion = tf.keras.models.load_model(tf_model_path)
         print(f"✓ Modelo de clasificación cargado desde: {tf_model_path}")
@@ -215,6 +222,8 @@ if __name__ == '__main__':
     print(f"  - Segmentación: {'✓' if modelo_segmentacion else '✗'}")
     print(f"  - Clasificación: {'✓' if modelo_clasificacion else '✗'}")
     print("="*50)
-    print("\nServidor corriendo en http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.getenv("PORT", "5000"))
+    debug = os.getenv("FLASK_DEBUG", "0") == "1"
+    print(f"\nServidor corriendo en http://0.0.0.0:{port} (debug={debug})")
+    app.run(host='0.0.0.0', port=port, debug=debug)
 
